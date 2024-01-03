@@ -1,3 +1,4 @@
 # Jlkep
 
-[![Build Status](https://github.com/TsumanumaSakuto/Jlkep.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/TsumanumaSakuto/Jlkep.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+軌道とJulia言語のお勉強のために作成しました
+

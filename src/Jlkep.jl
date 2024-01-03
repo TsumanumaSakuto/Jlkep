@@ -2,6 +2,7 @@ module Jlkep
 
 
 using LinearAlgebra
+using SPICE
 
 #各種定数
 const AU = 1.49597870700e8
