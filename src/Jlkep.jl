@@ -100,5 +100,48 @@ function par2ic(par::Par, μ)
 	return r, v
 end
 
+#ケプラー問題を解く
+function solve_kepler_equation(a, e, tof, μ, err = 10^-15)
+
+	if e < 1
+		#楕円軌道の場合
+		M = √(μ / a^3) * tof
+		Eₙ = M
+
+		f(E) = E - e * sin(E) - M
+		df_dE(E) = 1 - e * cos(E)
+
+		while true
+			Eₙ₊₁ = Eₙ - f(Eₙ) / df_dE(Eₙ)
+			if abs(Eₙ₊₁ - Eₙ) < err
+				break
+			end
+			Eₙ = Eₙ₊₁
+		end
+		return Eₙ
+	else
+		#双曲線軌道の場合
+		M = √(μ / (-a)^3) * tof
+		Hₙ = M
+
+		F(H) = e * sinh(H) - H - M
+		df_dH(H) = e * cosh(H) - 1
+
+		while true
+			Hₙ₊₁ = Hₙ - F(Hₙ) / df_dH(Hₙ)
+			if abs(Hₙ₊₁ - Hₙ) < err
+				break
+			end
+			Hₙ = Hₙ₊₁
+		end
+		return Hₙ
+	end
+end
+
+function propagate_lagrangian(r, v, tof, μ)
+	par = ic2par(r, v, μ)
+	par.E = solve_kepler_equation(par.a, par.e, tof, μ)
+	return par2ic(par, μ)
+end
 
 end
