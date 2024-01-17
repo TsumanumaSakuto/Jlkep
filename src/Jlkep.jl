@@ -138,10 +138,77 @@ function solve_kepler_equation(a, e, tof, μ, err = 10^-15)
 	end
 end
 
-function propagate_lagrangian(r, v, tof, μ)
-	par = ic2par(r, v, μ)
+#軌道伝播を行う関数．初期位置と初期速度と時刻から現在の速度と位置を求める
+
+#一度軌道6要素に変換してから元に戻して伝播を行う方法．
+#ただiが0のときや離心率が0の時など特殊な場合うまくいかない可能性がある
+"""
+function propagate_lagrangian(r₀, v₀, tof, μ)
+	par = ic2par(r₀, v₀, μ)
 	par.E = solve_kepler_equation(par.a, par.e, tof, μ)
 	return par2ic(par, μ)
 end
+"""
+
+#ラグランジュの係数を求めてから軌道伝播を行う方法．
+#ただeが1に近い時などうまくいかない可能性がある
+#動作未確認
+function propagate_lagrangian(r₀, v₀, tof, μ, err = 10^-15)
+
+	a = 1 / (1 / norm(r₀) - v₀ ⋅ v₀ / μ)
+
+	if a > 0
+		M = √(μ / a^3) * tof
+		ΔEₙ = M
+
+		F(ΔE) = ΔE - (1 - norm(r₀) / a) * sin(ΔE) + r₀ ⋅ v₀ * (1 - cos(ΔE)) / √(μ * a) - M
+		dF_dΔE(ΔE) = 1 - (1 - norm(r₀) / a) * cos(ΔE) + r₀ ⋅ v₀ * sin(ΔE) / √(μ * a)
+
+		while true
+			ΔEₙ₊₁ = ΔEₙ - F(ΔEₙ) / dF_dΔE(ΔEₙ)
+			if abs(ΔEₙ₊₁ - ΔEₙ) < err
+				break
+			end
+			ΔEₙ = ΔEₙ₊₁
+		end
+		ΔE = ΔEₙ
+		f = 1 - a * (1 - cos(ΔE)) / norm(r₀)
+		g = tof - √(a^3 / μ) * (ΔE - sin(ΔE))
+
+		r = f * r₀ + g * v₀
+
+		ḟ = -√(μa) * sin(ΔE) / (norm(r) * norm(r₀))
+		ġ = 1 - a * (1 - cos(ΔE)) / norm(r)
+
+		v = ḟ * r₀ + ġ * v₀
+		return r, v
+	else
+		M = √(μ / (-a)^3) * tof
+		ΔHₙ = M
+
+		F(ΔH) = (1 + norm(r₀) / (-a)) * sinh(ΔH) + r₀ ⋅ v₀ * (cosh(ΔH) - 1) / √(μ * (-a)) - ΔH - M
+		dF_dΔE(ΔE) = (1 + norm(r₀) / (-a)) * cosh(ΔH) + r₀ ⋅ v₀ * sinh(ΔH) / √(μ * (-a)) - 1
+
+		while true
+			ΔHₙ₊₁ = ΔHₙ - F(ΔHₙ) / dF_dΔE(ΔHₙ)
+			if abs(ΔHₙ₊₁ - ΔHₙ) < err
+				break
+			end
+			ΔHₙ = ΔHₙ₊₁
+		end
+		ΔH = ΔHₙ
+		f = 1 + (-a) * (1 - cosh(ΔH)) / norm(r₀)
+		g = tof - √((-a)^3 / μ) * (ΔH - sinh(ΔH))
+
+		r = f * r₀ + g * v₀
+
+		ḟ = -√(μ * (-a)) * sinh(ΔH) / (norm(r) * norm(r₀))
+		ġ = 1 + (-a) * (1 - cosh(ΔH)) / norm(r)
+
+		v = ḟ * r₀ + ġ * v₀
+		return r, v
+	end
+end
+
 
 end
