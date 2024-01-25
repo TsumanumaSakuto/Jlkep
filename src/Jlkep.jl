@@ -143,9 +143,11 @@ end
 #一度軌道6要素に変換してから元に戻して伝播を行う方法．
 #ただiが0のときや離心率が0の時など特殊な場合うまくいかない可能性がある
 """
-function propagate_lagrangian(r₀, v₀, tof, μ)
-	par = ic2par(r₀, v₀, μ)
-	par.E = solve_kepler_equation(par.a, par.e, tof, μ)
+function propagate_lagrangian2(r₀, v₀, tof, μ)
+	p = ic2par(r₀, v₀, μ)
+	E = solve_kepler_equation(p.a, p.e, tof, μ)
+    println(E)
+	par = Par(p.a, p.e, p.i, p.Ω, p.ω, E)
 	return par2ic(par, μ)
 end
 """
@@ -153,6 +155,7 @@ end
 #ラグランジュの係数を求めてから軌道伝播を行う方法．
 #ただeが1に近い時などうまくいかない可能性がある
 #動作未確認
+"""
 function propagate_lagrangian(r₀, v₀, tof, μ, err = 10^-15)
 
 	a = 1 / (1 / norm(r₀) - v₀ ⋅ v₀ / μ)
@@ -209,6 +212,84 @@ function propagate_lagrangian(r₀, v₀, tof, μ, err = 10^-15)
 		return r, v
 	end
 end
+"""
+#バッティンの普遍公式を用いてラグランジュの係数を求めてから軌道伝播を行う方法．
+#軌道の種類で場合分けせずに普遍的にラグランジュの係数の係数を求めることができるため精度よくできる
+function propagate_lagrangian(r₀, v₀, tof, μ, err = 10^-12)
+	#r₀の大きさとα₀を計算する
+	r₀_n = norm(r₀)
+	α₀_n = 2 / r₀_n - (v₀ ⋅ v₀) / μ
+	χ = 0.0
 
+	#χの初期値を決定する
+	if α₀_n > 0 #楕円軌道の場合
+		χ = α₀_n * √μ * tof
+	else #双曲線軌道の場合
+		dt = 1
+		if tof != 0
+			dt = tof
+		end
+		χ = (1 / √(-α₀_n)) * log((2μ * (√(-α₀_n))^3 * dt) / (√μ * (1 - α₀_n * r₀_n) + √(-α₀_n) * r₀ ⋅ v₀))
+
+	end
+
+	function S(z)
+		res = 0.0
+		k = 0
+		while true
+			diff = (-1)^k * z^k / factorial(2k + 3)
+			res += diff
+			k += 1
+			if diff^2 < err^2 || k > 8
+				return res
+			end
+		end
+	end
+	function C(z)
+		res = 0.0
+		k = 0
+		while true
+			diff = (-1)^k * z^k / factorial(2k + 2)
+			res += diff
+			k += 1
+			if diff^2 < err^2 || k > 8
+				return res
+			end
+		end
+	end
+	i = 0
+	# 普遍変数χを求める
+	while true
+		z = α₀_n * χ^2
+		s = S(z)
+		c = C(z)
+		F = (1 - α₀_n * r₀_n) * χ^3 * s + r₀ ⋅ v₀ * χ^2 * c / √μ + r₀_n * χ - √μ * tof
+		dF_dχ = (1 - α₀_n * r₀_n) * χ^2 * c + r₀ ⋅ v₀ * χ * (1 - z * s) / √μ + r₀_n
+
+		χₙ₊₁ = χ - F / dF_dχ
+		if abs(χₙ₊₁ - χ) < err || i > 100
+			break
+		end
+		χ = χₙ₊₁
+		i += 1
+	end
+
+	C_α₀χ² = C(α₀_n * χ^2)
+	S_α₀χ² = S(α₀_n * χ^2)
+
+	#rとvを求める
+	f = 1 - χ^2 * C_α₀χ² / r₀_n
+	g = tof - χ^3 * S_α₀χ² / √μ
+
+	r = f * r₀ + g * v₀
+	r_n = norm(r)
+
+	ḟ = √μ * (α₀_n * χ^3 * S_α₀χ² - χ) / (r_n * r₀_n)
+	ġ = 1 - χ^2 * C_α₀χ² / r_n
+
+	v = ḟ * r₀ + ġ * v₀
+
+	return r, v
+end
 
 end
