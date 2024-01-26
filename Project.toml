@@ -3,6 +3,10 @@ uuid = "ea1dc8b9-140f-476a-9e4b-2e3070ddff7f"
 authors = ["TsumanumaSakuto <tsumanumasakutok@gmail.com>"]
 version = "1.0.0-DEV"
 
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SPICE = "5bab7191-041a-5c2e-a744-024b9c3a5062"
+
 [compat]
 julia = "1.9"
 
