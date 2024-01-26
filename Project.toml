@@ -6,6 +6,7 @@ version = "1.0.0-DEV"
 [deps]
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 SPICE = "5bab7191-041a-5c2e-a744-024b9c3a5062"
 
 [compat]
