@@ -1,6 +1,6 @@
 name = "Jlkep"
 uuid = "ea1dc8b9-140f-476a-9e4b-2e3070ddff7f"
-authors = ["TsumanumaSakuto <tsumanumasakutok@gmail.com>"]
+authors = ["TsumanumaSakuto <tsumanumasakuto@gmail.com>"]
 version = "1.0.0-DEV"
 
 [deps]

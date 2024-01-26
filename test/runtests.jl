@@ -1,7 +1,7 @@
-using Jlkep
 using Test
+using Jlkep
 
 @testset "Jlkep.jl" begin
-    # Write your tests here.
-    println("Hello")
+    println(Jlkep.MU_EARTH)
 end
+
