@@ -1,16 +1,20 @@
 using LinearAlgebra
-using SPICE
+using SPICE: SPICE
+
+SPICE.furnsh("data/naif0012.tls")
+SPICE.furnsh("data/genker_gm_de431.tpc")
+SPICE.furnsh("data/enker_de440.bsp")
 
 export AU, DAY2SEC, SEC2DAY, DAY2YEAR, DEG2RAD, RAD2DEG, MU_SUN, MU_EARTH
 #constants
-const AU = 1.49597870700e8
+const AU = SPICE.convrt(1.0, "AU", "KM")
 const DAY2SEC = 86400
 const SEC2DAY = 1.1574074074074073e-5
 const DAY2YEAR = 31556952
 const DEG2RAD = 0.017453292519943295
 const RAD2DEG = 57.29577951308232
-const MU_SUN = 1.327124400419393e11
-const MU_EARTH = 3.98600435436e5
+const MU_SUN = SPICE.bodvrd("SUN", "GM", 1)[1]
+const MU_EARTH = SPICE.bodvrd("EARTH", "GM", 1)[1]
 
 #軌道6要素
 struct Par
@@ -22,20 +26,21 @@ struct Par
 	E::Float64
 end
 
-#カルテシアン要素
-struct Ic
-	r::Vector{Float64}
-	v::Vector{Float64}
-end
 
 #単位ベクトル
 î = [1, 0, 0]
 ĵ = [0, 1, 0]
 k̂ = [0, 0, 1]
 
+
+function calc_period(a, μ)
+	2π * √(a^3 / μ)
+end
+
+
 #カルテシアン要素から軌道6要素に変換
 """
-    ic2par(r::Vector{Float64}, v::Vector{Float64}, μ)
+	ic2par(r::Vector{Float64}, v::Vector{Float64}, μ)
 
 `ic2par` is a function that convert cartesian elements to keplarsian elements.
 
@@ -76,14 +81,11 @@ function ic2par(r::Vector{Float64}, v::Vector{Float64}, μ)
 	return Par(a, e, i, Ω, ω, E)
 end
 
-function ic2par(IC::Ic, μ)
-	ic2par(IC.r, IC.v, μ)
-end
 
 
 #軌道6要素から位置と速度の形式に変換
 """
-    function par2ic(par::Par, μ)
+	function par2ic(par::Par, μ)
 
 `par2ic` is a function that convert keplarsian elements to cartesian elements.
 
@@ -123,7 +125,7 @@ end
 
 #ケプラー問題を解く
 """
-    solve_kepler_equation(a, e, tof, μ, err = 10^-15)
+	solve_kepler_equation(a, e, tof, μ, err = 10^-15)
 
 The function `solve_kepler_equation` is designed to numerically solve Kepler's equation.
 
@@ -135,9 +137,7 @@ The function `solve_kepler_equation` is designed to numerically solve Kepler's e
 - `err`: Tolerance for the numerical solver, default is `1e-15`.
 
 # Returns
-- `E`: Eccentricity anomaly
-or
-- `H`: Hyperbolic anomaly
+- `E`: Eccentricity anomaly or `H`: Hyperbolic anomaly
 """
 function solve_kepler_equation(a, e, tof, μ, err = 10^-15)
 
@@ -252,6 +252,7 @@ function propagate_lagrangian(r₀, v₀, tof, μ, err = 10^-15)
 	end
 end
 """
+
 function S(z, err)
 	res = 0.0
 	k = 0
@@ -282,7 +283,7 @@ end
 # 軌道の種類で場合分けせずに普遍的にラグランジュの係数の係数を求めることができるため精度よくできる
 
 """
-    propagate_lagrangian(r₀::Vector{Float64}, v₀::Vector{Float64}, tof, μ, err=1e-12)
+	propagate_lagrangian(r₀::Vector{Float64}, v₀::Vector{Float64}, tof, μ, err=1e-12)
 
 compute the position and velocity vectors at a future time instant.
 

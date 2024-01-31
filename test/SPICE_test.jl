@@ -26,8 +26,8 @@ x_mars = zeros(num_grid, 6)
 
 # Iteration
 for i ∈ 1:num_grid
-	x_earth[i, :], _ = SPICE.spkez(399, et_all[i], "ECLIPJ2000", "NONE", 10)
-	x_mars[i, :], _ = SPICE.spkez(4, et_all[i], "ECLIPJ2000", "NONE", 10)
+	x_earth[i, :], _ = SPICE.spkezr("EARTH  BARYCENTER", et_all[i], "ECLIPJ2000", "NONE", "SUN")
+	x_mars[i, :], _ = SPICE.spkezr("MARS BARYCENTER", et_all[i], "ECLIPJ2000", "NONE", "SUN")
 end
 
 
