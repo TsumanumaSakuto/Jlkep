@@ -13,8 +13,8 @@ fig = Figure()
 
 ax = Axis3(fig[1, 1], aspect = :data)
 
-jk.orbit_plots.plot_planet!("Io",ax,2458258*365.25)
-jk.orbit_plots.plot_planet!("Europa",ax,2458258*365.25)
+jk.orbit_plots.plot_planet!("EARTH BARYCENTER",ax)
+jk.orbit_plots.plot_planet!("JUPITER BARYCENTER",ax)
 display(fig)
 
 # jk.orbit_plots.plot_planet("EARTH BARYCENTER")
